@@ -5,6 +5,7 @@
 
 ExtDef -> Specifier FunDec CompSt (6)
 FunDec.otherInfomation = new FuncInfo()
+CompSt.otherInfomation = (Specifier.sType, Specifier.sDimension)
 
 ExtDef -> Specifier FunDec SEMI (59)
 FunDec.otherInfomation = new FuncInfo()
@@ -20,13 +21,13 @@ VarList -> ParamDec COMMA VarList' (20)
 VarList'.otherInfomation = VarList.otherInfomation
 param = new Symbol()
 param.dimension = ParamDec.sDimension
-addFuncParam(VarList.otherInfomation, param)
+addTempFuncParam(VarList.otherInfomation, param)
 VarList'.otherInfomation = NULL
 
 VarList -> ParamDec (21)
 param = new Symbol()
 param.dimension = ParamDec.sDimension
-addFuncParam(VarList.otherInfomation, new Symbol())
+addTempFuncParam(VarList.otherInfomation, new Symbol())
 
 ParamDec -> Specifier VarDec (22)
 VarDec.iType = Specifier.sType
@@ -42,13 +43,53 @@ ParamDec.sDimension = VarDec.sDimension
 // 函数调用
 
 Exp -> ID LP Args RP (50)
-checkSymbolKind
+Args.otherInfomation = ID.otherInfomation = FuncInfo
 
 Exp -> ID LP RP (51)
 
 Args -> Exp COMMA Args' (57)
-Args.sValid = Exp.sValid
+addTempFuncParam(Exp)
+Args.otherInfomation = NULL
 
 Args -> Exp (58)
-Args.sValid = Exp.sValid
+addTempFuncParam(Exp)
+Args.otherInfomation = NULL
+
+
+// 检查错误类型8，return语句的返回类型与函数定义的返回类型不匹配
+
+CompSt -> LC DefList StmtList RC (23)
+StmtList->otherInfomation = CompSt.sType
+
+
+StmtList -> Stmt StmtList' (24)
+Stmt->otherInfomation = StmtList.sType
+StmtList'->otherInfomation = StmtList.sType
+
+
+Stmt -> CompSt (27)
+Stmt->otherInfomation = Stmt.sType
+
+
+Stmt -> IF LP Exp RP Stmt' (29)
+Stmt->otherInfomation = Stmt.sType
+
+
+Stmt -> IF LP Exp RP Stmt' ELSE Stmt'' (30)
+Stmt->otherInfomation = StmtList.sType
+
+
+Stmt -> WHILE LP Exp RP Stmt' (31)
+Stmt->otherInfomation = StmtList.sType
+
+
+Stmt -> RETURN Exp SEMI (28)
+check Exp->sValid
+check (exp->sType == Stmt->sType)
+
+
+/*******************************************************/
+/******************************************************/
+
+
 

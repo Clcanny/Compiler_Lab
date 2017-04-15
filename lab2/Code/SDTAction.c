@@ -2,7 +2,7 @@
 #include "SDTAction.h"
 #include <stdarg.h>
 #include <malloc.h>
-// #define SDT_DEBUG_PRINT
+//#define SDT_DEBUG_PRINT
 
 void traversalTreePerformAction(AST_node *parent)
 {
@@ -17,14 +17,14 @@ void traversalTreePerformAction(AST_node *parent)
 //     print_child_node(parent, 0);
 // #endif
     int i = 1;
+#ifdef SDT_DEBUG_PRINT
+    printf("Line %d: %s childNum(%d) (%d) I Action start.\n",
+        parent->loc_line, parent->str, i, proNum);
+#endif
     for (AST_node *child = parent->first_child;
             child != NULL;
             child = child->next_brother)
     {
-#ifdef SDT_DEBUG_PRINT
-    printf("Line %d: %s childNum(%d) (%d) I Action start.\n",
-     parent->loc_line, parent->str, i, proNum);
-#endif
         if (f != NULL)
         {
             f(parent, child, i);
@@ -155,7 +155,7 @@ IDS(39, 40, 41, 42, 43, 44, 45, 46)
     }
 }
 
-IDS(47, 49)
+IDS(47, 48, 49)
 {
     if (childNum == 2)
     {
@@ -405,6 +405,15 @@ SD(47)
     }
 }
 
+SD(48)
+{
+    TypeInfo* exp = (TypeInfo*)(parent->other_info);
+    TypeInfo* exp_ = (TypeInfo*)(parent->first_child->next_brother->other_info);
+    exp->sValid = 1;
+    exp->sType = exp_->sType;
+    exp->sDimension = exp_->sDimension;
+}
+
 SD(49)
 {
     D_parent_info;
@@ -483,8 +492,6 @@ SDS(55, 56)
 
 void initTable()
 {
-    IS(17, 26, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 49, 52);
-    SS(9, 16, 17, 26, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 49, 52, 54, 55, 56);
-    IS(6, 18, 20, 22, 59);
-    SS(18, 19, 20, 21, 22);
+    IS(17, 26, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 52);
+    SS(9, 16, 17, 26, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 49, 48, 52, 54, 55, 56);
 }

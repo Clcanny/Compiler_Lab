@@ -36,6 +36,8 @@ typedef struct
 {
     int status; // 0表示为函数声明，1表示为函数定义
     const char *return_type;
+    int *use_line; // 函数声明或者使用所在行数, 为正代表声明，为负代表使用
+    int use_line_size; // use_line数组的大小
     int param_num;
     Symbol *param_list;
 } FuncInfo;
@@ -67,19 +69,23 @@ void cleanUpSymbolTable();
 
 SymbolTable *globalFuncSymbolTable;
 
+void printFuncSymbolTable();
 SymbolTable *newFuncSymbolTable();
-void addFuncParam(FuncInfo *function, const char *param_name,
+void addTempFuncParam(FuncInfo *function, const char *param_name,
  const char*param_type, int param_dimension);
+int *expandFuncUseLine(int *old_line, int old_size);
 // 清理临时参数列表
 void freeTempParamList(Symbol *param_list);
 // 将语法树节点中存的函数定义信息存入符号表
 // 若返回1表示成功
 // 返回0表示失败,函数重复定义; 
 // 返回-1表示失败，函数多次声明相互冲突、声明和定义相互冲突
-int addNewFunc(const char *name, FuncInfo *function);
+int addNewFunc(const char *name, FuncInfo *function, int line);
 int insertFuncIntoTable(Symbol *function);
-int checkFuncParam(FuncInfo *func_exist, FuncInfo *func_uncheck);
+int checkFuncParamMatch(FuncInfo *func_exist, FuncInfo *func_uncheck);
 // 在函数符号表中查找相应函数信息
 Symbol *getFuncSymbol(const char *func_name);
+// 在所有SDT执行完后, 查看函数符号表确认是否有函数未定义
+void findUndefinedFunction();
 
 #endif

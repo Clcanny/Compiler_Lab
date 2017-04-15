@@ -70,17 +70,9 @@ typedef struct
     int sValid;
 } TypeInfo;
 
-void pro6IAction(AST_node *parent, AST_node *child, int childNum);
-void pro18IAction(AST_node *parent, AST_node *child, int childNum);
-void pro20IAction(AST_node *parent, AST_node *child, int childNum);
-void pro22IAction(AST_node *parent, AST_node *child, int childNum);
-void pro59IAction(AST_node *parent, AST_node *child, int childNum);
+void initTable();
 
-void pro9SAction(AST_node *parent);
-void pro18SAction(AST_node *parent);
-SDTSAction pro19SAction;
-void pro20SAction(AST_node *parent);
-SDTSAction pro21SAction;
-void pro22SAction(AST_node *parent);
+void initTable_lxs();
+
 
 #endif

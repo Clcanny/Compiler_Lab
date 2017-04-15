@@ -1,17 +1,11 @@
-float func(int c, float a);
-float func(int b, float a)
-{
-    int a = 1;
-}
+float func(int c, float d);
+float func(int q, float w);
 int main()
 {
-    int x[2][3][4];
-    x[1];
-    x[1][2];
-    x[1][2][3];
-    x[1][2][3][4];
-}
-int func(int b, float a)
-{
     int a = 1;
+    float f = 2.3;
+    func(a, f);
+    return 1.4;
 }
+float func(int c, float d);
+

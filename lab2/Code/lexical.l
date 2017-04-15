@@ -28,8 +28,8 @@
 
 %option yylineno
 digit [0-9]
-letter [a-zA-Z|_]
-ws [ |\t|\n]
+letter [a-zA-Z_]
+ws [ \t\n]
 
 %%
 \n    { 
@@ -106,7 +106,7 @@ ws [ |\t|\n]
     yylval.type_node = new_token_node(yylloc.first_line, yylloc.first_column, "AND");
     return AND;
 }
-\|\|    {
+"||"    {
     print_loc_info("OR");
     yylval.type_node = new_token_node(yylloc.first_line, yylloc.first_column, "OR");
     return OR;

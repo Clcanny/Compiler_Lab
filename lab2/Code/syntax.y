@@ -48,9 +48,11 @@ Program
         $$ = new_parent_node("Program", 1, 1, $1);
         /* print_child_node($$, 0); */
         initTable();
+        initTable_lxs();
         globalSymbolTable = newSymbolTable();
         globalFuncSymbolTable = newFuncSymbolTable();
         traversalTreePerformAction($$);
+        findUndefinedFunction();
         clean_up_syntax_tree($$);
         cleanUpSymbolTable();
     }
