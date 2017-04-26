@@ -225,6 +225,8 @@ int funcDefineEnd(int line)
     {
         if(func_in_table->status == 1 && cur_def_func->status == 1)
             result = 0;
+        else if(func_in_table->return_type == NULL || cur_def_func->return_type == NULL)
+            return -1;
         else 
         {
             if(checkFuncParamMatch(func_in_table, cur_def_func)
@@ -249,7 +251,7 @@ int funcDefineEnd(int line)
                 result = -1;
         }
     }
-    free(globalFuncSymbolTable->cur_def_func->param_list);
+    freeTempParamList(globalFuncSymbolTable->cur_def_func->param_list);
     free(globalFuncSymbolTable->cur_def_func);
     globalFuncSymbolTable->cur_def_func = NULL;
     globalFuncSymbolTable->func_in_table = NULL;

@@ -422,11 +422,10 @@ SD(10)
     TypeInfo *structSpecifier = (TypeInfo*)(parent->first_child->other_info);
     if(!structSpecifier->sValid)
         specifier->sValid = 0;
-    else 
+    else {
+        specifier->sValid = 1;
         specifier->sType = structSpecifier->sType;
-    /* Demons Add */
-    free(parent->other_info);
-    /* Demons End */
+    }
     parent->other_info = specifier;
 }
 

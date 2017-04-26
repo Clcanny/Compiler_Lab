@@ -1,20 +1,12 @@
-struct A
-{
-    int a;
-    struct {
-        float b[2];
-        int c[2][4];
-    }d_struct;
-};
-
-struct A func(struct A a_struct[2][3]);
+int func(int a, int b);
 
 int main()
 {
-    struct A temp[2][3];
+    int c[2][3], d[2];
+    return func(c[1][2], d[1]);
 }
 
-struct A func(struct A a_struct[2][3])
+int func(int a, int b)
 {
-    return a_struct[1][1];
+return 1;
 }
