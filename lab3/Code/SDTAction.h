@@ -1,6 +1,8 @@
 #ifndef SDTACTION_H
 #define SDTACTION_H
 
+// #define SDT_DEBUG_PRINT
+
 #include "syntax_tree.h"
 #include "symbol_table.h"
 #include "for_each.h"

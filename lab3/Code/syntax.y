@@ -46,7 +46,7 @@
 Program
     : ExtDefList {
         $$ = new_parent_node("Program", 1, 1, $1);
-        print_child_node($$, 0);
+        // print_child_node($$, 0);
         initTable();
         initTable_lxs();
         IR_list = new_IR_list();
@@ -57,6 +57,7 @@ Program
         traversalTreePerformAction($$);
         traverse_IR_list(print_IR);
         // printSymbolTable(globalSymbolTable);
+        // printFuncSymbolTable(globalFuncSymbolTable);
         // findUndefinedFunction();
         clean_up_syntax_tree($$);
         cleanUpSymbolTable();

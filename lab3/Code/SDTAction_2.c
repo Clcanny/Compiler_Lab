@@ -15,7 +15,8 @@ ID(6)
             return_type = NULL;
         else
             return_type = specifier->sType;
-        startDefineFunction(child->first_child->str + 4, 1, return_type);
+        startDefineFunction(child->first_child->str + 4, 1, return_type, 
+            child->first_child);
     }
     else if(childNum == 3)
     {
@@ -27,6 +28,20 @@ ID(6)
             compSt->sType = specifier->sType;
         compSt->sValid = 1;
         child->other_info = compSt;
+
+// IR Generation
+        AST_node *func_id = parent->first_child->next_brother->first_child;
+        func_id->IRIndex = nextFuncIndex++;
+        FuncInfo *function = findFuncSymbol(func_id->str + 4);
+        gen_IR(Fun, new_value(F, func_id->IRIndex));
+        Symbol *param = function->param_list;
+        while(param != NULL) 
+        {
+            ((AST_node*)(param->p))->IRIndex = nextVarIndex++;
+            gen_IR(Param, new_value(V, nextVarIndex - 1));
+            param = param->next;
+        }
+// end
     }
 }
 
@@ -40,7 +55,7 @@ ID(59)
             return_type = NULL;
         else
             return_type = specifier->sType;
-        startDefineFunction(child->first_child->str + 4, 0, return_type);
+        startDefineFunction(child->first_child->str + 4, 0, return_type, NULL);
     }
 }
 
@@ -129,6 +144,11 @@ SD(22)
 
 ID(50)
 {
+    if(childNum == 0)
+    {
+        parent->IRIndex = nextVarIndex++;
+    }
+
     if(childNum == 3)
     {
         FuncInfo *args = (FuncInfo*)malloc(sizeof(FuncInfo));
@@ -137,18 +157,36 @@ ID(50)
         args->param_list = NULL;
         child->other_info = args;
         parent->first_child->other_info = args;
+
+// IR Generation
+
     }
 }
 
 ID(51)
 {
+    if(childNum == 0)
+    {
+        parent->IRIndex = nextVarIndex++;
+    }
+
     if(childNum == 2)
     {
         FuncInfo *args = (FuncInfo*)malloc(sizeof(FuncInfo));
         args->name = parent->first_child->str + 4;
         args->param_num = 0;
         args->param_list = NULL;
-        parent->first_child->other_info = args;        
+        parent->first_child->other_info = args; 
+
+// IR Generation
+        char *func_id = parent->first_child->str + 4;
+        AST_node *function = (AST_node*)(findFuncSymbol(func_id)->p);
+        int place_index = parent->IRIndex;
+        if(strcmp(func_id, "read") == 0)
+            gen_IR(Read, new_value(V, place_index));
+        else
+            gen_IR(Call, new_value(V, place_index), new_value(F, function->IRIndex));
+// end
     }
 }
 
@@ -159,6 +197,7 @@ ID(57)
         TypeInfo* exp = (TypeInfo*)malloc(sizeof(TypeInfo));
         exp->iDimension = 0;
         child->other_info = exp;
+        child->IRIndex = nextVarIndex++;
     }
     else if(childNum == 2)
     {
@@ -170,6 +209,7 @@ ID(57)
             param->type = exp->sType;
             param->dimension = exp->sDimension;
             param->next = NULL;
+            param->p = parent->first_child;
             args->param_num++;
             Symbol *param_list = args->param_list;
             if(param_list == NULL)
@@ -196,11 +236,90 @@ ID(58)
         /* Demons Add */
         exp->iDimension = 0;
         /* Demons end */
-        child->other_info = exp; 
+        child->other_info = exp;
+        child->IRIndex = nextVarIndex++; 
     }
 }
 
-SDS(50, 51)
+SD(50)
+{
+    const char* func_name = parent->first_child->str + 4;
+    FuncInfo *func_in_table = findFuncSymbol(func_name);
+    FuncInfo *func_call = (FuncInfo*)(parent->first_child->other_info);
+    if(func_in_table == NULL)
+    {
+        if(getSymbolFull(func_name) != NULL)
+            printf("Error type 11 at Line %d: Value %s is not a function.\n",
+                parent->loc_line, func_name);
+        else
+            printf("Error type 2 at Line %d: Function %s has not been defined.\n",
+                parent->loc_line, func_name);
+        TypeInfo* exp = (TypeInfo*)(parent->other_info);
+        exp->sValid = 0;
+        if(func_call->param_list != NULL)
+            freeTempParamList(func_call->param_list);
+        free(func_call);
+        parent->first_child->other_info = NULL;
+        return;
+    }
+    if(!checkFuncParamMatch(func_in_table, func_call))
+        printf("Error type 9 at Line %d: Function \"%s\" call is not match its defination.\n", 
+            parent->loc_line, func_name);
+    else if(func_in_table->status == 0)
+    {
+        int old_size = func_in_table->use_line_size;
+        func_in_table->use_line = expandFuncUseLine(func_in_table->use_line, old_size);
+        func_in_table->use_line[old_size] = -(parent->loc_line);
+        func_in_table->use_line_size = old_size + 1;
+    }
+
+    TypeInfo* exp = (TypeInfo*)(parent->other_info);
+    exp->sType = func_in_table->return_type;
+    exp->sDimension = 0;
+    if(exp->sType == NULL)
+        exp->sValid = 0;
+    else
+        exp->sValid = 1;
+    exp->nextInfo = (void*)0;
+
+// IR Generation
+    Symbol *arg_list = func_call->param_list;
+    AST_node *first_node = (AST_node*)(arg_list->p);
+    char *func_id = parent->first_child->str + 4;
+    if(strcmp(func_id, "write") == 0)
+        gen_IR(Write, new_value(V, first_node->IRIndex));
+    else
+    {
+        AST_node **node_array = (AST_node**)malloc(sizeof(AST_node*) * func_call->param_num);
+        int i = 0;
+        while(arg_list != NULL)
+        {
+            node_array[i] = (AST_node*)(arg_list->p);
+            arg_list = arg_list->next;
+            i++;
+        }
+        TypeInfo *cur_type;
+        for(i = i - 1; i >= 0; i--) 
+        {
+            cur_type = (TypeInfo*)(node_array[i]->other_info);
+            if(cur_type->sDimension > 0)
+                gen_IR(Arg, new_value(Address, node_array[i]->IRIndex));
+            else
+                gen_IR(Arg, new_value(V, node_array[i]->IRIndex));
+        }
+    }
+    int place_index = parent->IRIndex;
+    AST_node *function = (AST_node*)(findFuncSymbol(func_id)->p);
+    gen_IR(Call, new_value(V, place_index), new_value(F, function->IRIndex));
+// end
+
+    if(func_call->param_list != NULL)
+        freeTempParamList(func_call->param_list);
+    free(func_call);
+    parent->first_child->other_info = NULL;
+}
+
+SD(51)
 {
     const char* func_name = parent->first_child->str + 4;
     FuncInfo *func_in_table = findFuncSymbol(func_name);
@@ -247,6 +366,7 @@ SDS(50, 51)
     parent->first_child->other_info = NULL;
 }
 
+
 SD(57)
 {
     parent->other_info = NULL;
@@ -262,6 +382,7 @@ SD(58)
         param->type = exp->sType;
         param->dimension = exp->sDimension;
         param->next = NULL;
+        param->p = parent->first_child;
         args->param_num++;
         Symbol *param_list = args->param_list;
         if(param_list == NULL)

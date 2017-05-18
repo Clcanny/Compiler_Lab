@@ -41,7 +41,7 @@ enum IRKind{
     Call = 9,       // "target := CALL arg1"
     Param = 10,     // "PARAM target"
     Read = 11,      // "READ target"
-    Write = 12,     // "WRITE teaget"
+    Write = 12,     // "WRITE target"
 };
 
 typedef struct {

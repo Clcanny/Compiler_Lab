@@ -35,6 +35,7 @@ static void deleteSymbol(void *p)
 static void deleteFuncSymbol(void *p)
 {
     FuncInfo* func = (FuncInfo*)p;
+    free((AST_node*)(func->p));
     free(func->use_line);
     free(func);
 }
@@ -62,7 +63,10 @@ int insertSymbol(SymbolTable *st, const char *name, int kind,
     symbol->type = type;
     symbol->dimension = dimension;
     symbol->next = next_detail;
-    symbol->p = p;
+    if(p == NULL)
+        symbol->p = malloc(sizeof(TypeInfo));
+    else
+        symbol->p = p;
     
     ret = jsw_rbinsert(st, (void *)symbol);
     if (ret == 0)
@@ -178,7 +182,8 @@ void printFuncSymbolTable()
         printf("Param List:\n");
         while(param_list != NULL)
         {
-            printf("type: %s, dimension: %d\n", param_list->type, param_list->dimension);
+            printf("name: %-5s, type: %s, dimension: %d\n", param_list->name, 
+                param_list->type, param_list->dimension);
             param_list = param_list->next;
         }
     }
@@ -191,7 +196,7 @@ int isDefineFunction()
     return globalFuncSymbolTable->is_defining;
 }
 
-void startDefineFunction(const char *name, int status, const char *return_type)
+void startDefineFunction(const char *name, int status, const char *return_type, void *p)
 {
     FuncInfo *def_func = (FuncInfo*)malloc(sizeof(FuncInfo));
     def_func->name = name;
@@ -201,6 +206,7 @@ void startDefineFunction(const char *name, int status, const char *return_type)
     def_func->use_line_size = 0;
     def_func->param_num = 0;
     def_func->param_list = NULL;
+    def_func->p = p;
     globalFuncSymbolTable->cur_def_func = def_func;
     globalFuncSymbolTable->func_in_table = findFuncSymbol(name);
     globalFuncSymbolTable->is_defining = 1;
@@ -390,10 +396,13 @@ int insertFuncIntoTable(FuncInfo *function)
 void freeTempParamList(Symbol *param_list)
 {
     Symbol *cur_param = param_list;
+    AST_node *cur_node;
     while(param_list != NULL)
     {
         cur_param = param_list;
         param_list = param_list->next;
+        cur_node = (AST_node*)(cur_param->p);
+        free(cur_node);
         free(cur_param);
     } 
 }

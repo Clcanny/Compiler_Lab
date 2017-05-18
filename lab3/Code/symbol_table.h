@@ -21,15 +21,6 @@ typedef struct
 
     // 只在kind=0时有效，表示维度
     int dimension;
-
-    // union
-    // {
-    //     // next用于连接同属于一个struct的域，或者连接同一个函数的形参列表
-    //     void *next;
-
-    //     // 当kind=1时，detail指向StructInfo; 当kind=2时，detail指向FuncInfo
-    //     void *detail; 
-    // } u;
     void *next;
 
     void *p;
@@ -44,6 +35,8 @@ typedef struct
     int use_line_size; // use_line数组的大小
     int param_num;
     Symbol *param_list;
+
+    void *p;
 } FuncInfo;
 
 typedef struct
@@ -116,7 +109,7 @@ FuncSymbolTable *globalFuncSymbolTable;
 int isDefineFunction();
 void printFuncSymbolTable();
 FuncSymbolTable *newFuncSymbolTable();
-void startDefineFunction(const char *name, int status, const char *return_type);
+void startDefineFunction(const char *name, int status, const char *return_type, void *p);
 // 返回1表示成功，返回0表示函数重定义，返回-1表示函数声明与定义间不匹配
 int funcDefineEnd(int line);
 // 返回1代表成功，返回0代表失败

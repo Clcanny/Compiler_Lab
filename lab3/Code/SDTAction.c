@@ -3,7 +3,6 @@
 #include <stdarg.h>
 #include <malloc.h>
 #include <inttypes.h>
-// #define SDT_DEBUG_PRINT
 
 int nextVarIndex = 1;
 int nextLabelIndex = 1;

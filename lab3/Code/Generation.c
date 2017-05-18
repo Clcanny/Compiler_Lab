@@ -30,10 +30,10 @@ Value* new_value(int kind, int value)
             sprintf(value_str, "#%d", value);
             break;
         case 5:
-            sprintf(value_str, "&%d", value);
+            sprintf(value_str, "&v%d", value);
             break;
         case 6:
-            sprintf(value_str, "*%d", value);
+            sprintf(value_str, "*v%d", value);
             break;
     }
     new_value->str = value_str;
@@ -111,7 +111,7 @@ void traverse_IR_list(void (*action)(IR*))
     list_iterator_t *it = list_iterator_new(IR_list, LIST_HEAD);
     while ((node = list_iterator_next(it))) 
     {
-      action((IR*)node->val);
+        action((IR*)node->val);
     }
     list_iterator_destroy(it);
 }
@@ -131,10 +131,8 @@ void print_IR(IR *ir)
                 ir->arg1->str, ir->u.op, ir->arg2->str);
             break;
         case 3:
-        {
             printf("%s := %s\n", ir->target->str, ir->arg1->str);
             break;
-        }
         case 4:
             printf("GOTO %s\n", ir->target->str);
             break;
