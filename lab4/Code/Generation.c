@@ -558,13 +558,16 @@ void generate_CFG()
                     label_jump[ir->target->u.no - 1].target_block = cur_block;
                 }
                 else {
-                    assert(func_jump[ir->target->u.no - 1].target_block == NULL);
-                    func_jump[ir->target->u.no - 1].target_block = cur_block;
+                    if(ir->target->u.no > 0) {
+                        assert(func_jump[ir->target->u.no - 1].target_block == NULL);
+                        func_jump[ir->target->u.no - 1].target_block = cur_block;                        
+                    }                
                 }
             }
             ir_count = 1;
         }
-        else if(ir->kind == Call || ir->kind == Goto || ir->kind == GotoRel) {
+        else if(ir->kind == Call || ir->kind == Goto 
+            || ir->kind == GotoRel || ir->kind == Return) {
             cur_block->last_ir = node;
             cur_block->ir_count = ir_count;
             if(cur_block->ir_count > 0)
@@ -583,14 +586,14 @@ void generate_CFG()
         }
     }
     list_iterator_destroy(it);
-    cur_block->last_ir = IR_list->tail;
-    cur_block->ir_count = ir_count;
-    if(cur_block->ir_count > 0)
-        list_rpush(block_list, list_node_new(cur_block));
-    else {
-        block_count--;
-        free(cur_block);
-    }
+    // cur_block->last_ir = IR_list->tail;
+    // cur_block->ir_count = ir_count;
+    // if(cur_block->ir_count > 0)
+    //     list_rpush(block_list, list_node_new(cur_block));
+    // else {
+    //     block_count--;
+    //     free(cur_block);
+    // }
     traverse_list(block_list, generate_CFG_edge);
     traverse_list(block_list, print_Block);
 
