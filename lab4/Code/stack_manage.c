@@ -1,13 +1,55 @@
 #include <string.h>
-#include "MIPS_asm.h"
 #include "stack_manage.h"
 #include "Generation.h"
+#include "MIPS_asm.h"
 
 void prepare(Value *value, int num)
-{}
+{
+    if(value == NULL)
+        return;
+    if(value->kind == Const) {
+        asm_li(reg("t", num), value->u.value);
+        return;
+    }
+    ASM_Block *block = NULL;
+    VarInfo *var = find_var(value->u.no, &block);
+    if(var == NULL)
+        return;
+    int offset = block->basis + var->offset;
+    if(value->kind == V) {
+        asm_lw(reg("t", num), addr_im_reg(-offset, reg_sp()));
+    }
+    else if(value->kind == Address) {
+        asm_la(reg("t", num), addr_im_reg(-offset, reg_sp()));
+    }
+    else if(value->kind == Content) {
+        asm_lw(reg("t", num), addr_im_reg(-offset, reg_sp()));
+        asm_lw(reg("t", num), addr_reg(reg("t", num)));
+    }
+}
 
 void save(Value *value, int num)
-{}
+{
+    if(value == NULL)
+        return;
+    ASM_Block *block = NULL;
+    VarInfo *var = find_var(value->u.no, &block);
+    if(var == NULL) {
+        var = add_var(4, value->u.no);
+        block = asm_block_stack->top;
+    }
+    if(block == NULL)
+        return;
+    int offset = block->basis + var->offset;
+    if(value->kind == V) {
+        asm_sw(reg("t", num), addr_im_reg(-offset, reg_sp()));
+    }
+    else if(value->kind == Content) {
+        asm_lw(reg("t", 3), addr_im_reg(-offset, reg_sp()));
+        asm_sw(reg("t", num), addr_reg(reg("t", 3)));
+    }
+
+}
 
 void genAsm(list_node_t *node)
 {
@@ -23,7 +65,7 @@ void genAsm(list_node_t *node)
         case Return:
             asm_mv(reg_sp(), reg_fp());
             asm_lw(addr_im_reg(imm(-4), reg_sp()), reg_fp());
-            p_asm("jr $ra");
+            asm_return(reg_ra());
             break;
         case Call:
             asm_sw(reg_fp(), addr_im_reg(imm(-4), reg_sp()));
@@ -81,16 +123,16 @@ void genAsm(list_node_t *node)
             }
             break;
         case Read:
-            p_asm("li $v0, 5");
-            p_asm("syscall");
+            p_asm("li $v0, 5\n");
+            asm_sys();
             asm_mv(reg("t", 0), reg("a", 0));
             save(ir->target, 0);
             break;
         case Write:
             prepare(ir->target, 0);
             asm_mv(reg("a", 0), reg("t", 0));
-            p_asm("li $v0, 1");
-            p_asm("syscall");
+            p_asm("li $v0, 1\n");
+            asm_sys();
             break;
     }
 }
