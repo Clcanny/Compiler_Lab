@@ -1,18 +1,23 @@
-int gun(int d)
+int fun(int n)
 {
-    return d;
-}
-int fun(int c)
-{
-    return gun(c);
+    if(n == 2)
+    {
+        return 1;
+    }
+    if(n == 1)
+    {
+        return 1;
+    }
+    else
+    {
+        return fun(n - 1) + fun(n - 2);
+    }
 }
 
 
 int main()
 {
-    int a;
-    a = read();
-    write(fun(a));
-    return a;
+    write(fun(3));
+    return 1;
 }
 
