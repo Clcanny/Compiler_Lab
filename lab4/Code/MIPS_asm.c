@@ -9,23 +9,23 @@ void start_gen_asm()
     p_asm(".data\n");
     asm_data_str(var_name("_prompt"), "Enter an integer:");
     asm_data_str(var_name("_ret"), "\\n");
-    p_asm(".global main\n");
+    p_asm(".globl main\n");
     p_asm(".text\n");
-    p_asm("read:\n");
-    asm_li(reg("v", 0), imm(4));
-    asm_la(reg("a", 0), var_name("_prompt"));
-    asm_sys();
-    asm_li(reg("v", 0), imm(5));
-    asm_sys();
-    asm_return(reg_ra());
-    p_asm("write:\n");
-    asm_li(reg("v", 0), imm(1));
-    asm_sys();
-    asm_li(reg("v", 0), imm(4));
-    asm_la(reg("a", 0), var_name("_ret"));
-    asm_sys();
-    asm_mv(reg("v", 0), reg_0());
-    asm_return(reg_ra());
+    // p_asm("read:\n");
+    // asm_li(reg("v", 0), imm(4));
+    // asm_la(reg("a", 0), var_name("_prompt"));
+    // asm_sys();
+    // asm_li(reg("v", 0), imm(5));
+    // asm_sys();
+    // asm_return(reg_ra());
+    // p_asm("write:\n");
+    // asm_li(reg("v", 0), imm(1));
+    // asm_sys();
+    // asm_li(reg("v", 0), imm(4));
+    // asm_la(reg("a", 0), var_name("_ret"));
+    // asm_sys();
+    // asm_mv(reg("v", 0), reg_0());
+    // asm_return(reg_ra());
 
     list_node_t *node;
     list_iterator_t *it = list_iterator_new(IR_list, LIST_HEAD);
@@ -106,25 +106,17 @@ VarInfo* add_var(int size, int no)
 
 VarInfo *find_var(int no, ASM_Block **block)
 {
-    list_node_t *node_var, *node_block;
+    list_node_t *node_var;
     VarInfo *var;
-    ASM_Block *cur_block;
-    list_iterator_t *it_var, *it_block = 
-        list_iterator_new(asm_block_stack->data, LIST_HEAD);
-    while((node_block = list_iterator_next(it_block)))
+    list_iterator_t *it_var = list_iterator_new(asm_block_stack->top->var_list, LIST_HEAD);
+    while((node_var = list_iterator_next(it_var)))
     {
-        cur_block = (ASM_Block*)(node_block->val);
-        it_var = list_iterator_new(cur_block->var_list, LIST_HEAD);
-        while((node_var = list_iterator_next(it_var)))
-        {
-            var = (VarInfo*)(node_var->val);
-            if(var->no == no) {
-                *block = cur_block;
-                return var;
-            }
+        var = (VarInfo*)(node_var->val);
+        if(var->no == no) {
+            *block = asm_block_stack->top;
+            return var;
         }
-        list_iterator_destroy(it_var);      
     }
-    list_iterator_destroy(it_block);
+    list_iterator_destroy(it_var);      
     return NULL;
 }

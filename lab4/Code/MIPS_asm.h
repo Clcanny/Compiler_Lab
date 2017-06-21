@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include "list.h"
 
-#define p_asm(fmt, ...) printf(fmt, ##__VA_ARGS__)
-// #define p_asm(fmt, ...) fprintf(f_output, fmt, ##__VA_ARGS__)
+// #define p_asm(fmt, ...) printf(fmt, ##__VA_ARGS__)
+#define p_asm(fmt, ...) fprintf(f_output, fmt, ##__VA_ARGS__)
 
 #define imm(val) p_asm("%d", val)
 #define var_name(val) p_asm("%s", val)
@@ -104,5 +104,5 @@ void pop_asm_block();
 VarInfo* add_var(int size, int no);
 VarInfo *find_var(int no, ASM_Block **block);
 void genAsm(list_node_t *node);
-
+void init_var_list(list_node_t *node);
 #endif
