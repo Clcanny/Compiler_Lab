@@ -8,22 +8,22 @@ void prepare(Value *value, int num)
     if(value == NULL)
         return;
     if(value->kind == Const) {
-        asm_li(reg("t", num), value->u.value);
+        asm_li(reg("t", num), imm(value->u.value));
         return;
     }
     ASM_Block *block = NULL;
     VarInfo *var = find_var(value->u.no, &block);
     if(var == NULL)
         return;
-    int offset = block->basis + var->offset;
+    int offset = -(block->basis + var->offset);
     if(value->kind == V) {
-        asm_lw(reg("t", num), addr_im_reg(-offset, reg_sp()));
+        asm_lw(reg("t", num), addr_im_reg(imm(offset), reg_fp()));
     }
     else if(value->kind == Address) {
-        asm_la(reg("t", num), addr_im_reg(-offset, reg_sp()));
+        asm_la(reg("t", num), addr_im_reg(imm(offset), reg_fp()));
     }
     else if(value->kind == Content) {
-        asm_lw(reg("t", num), addr_im_reg(-offset, reg_sp()));
+        asm_lw(reg("t", num), addr_im_reg(imm(offset), reg_fp()));
         asm_lw(reg("t", num), addr_reg(reg("t", num)));
     }
 }
@@ -40,12 +40,12 @@ void save(Value *value, int num)
     }
     if(block == NULL)
         return;
-    int offset = block->basis + var->offset;
+    int offset = -(block->basis + var->offset);
     if(value->kind == V) {
-        asm_sw(reg("t", num), addr_im_reg(-offset, reg_sp()));
+        asm_sw(reg("t", num), addr_im_reg(imm(offset), reg_fp()));
     }
     else if(value->kind == Content) {
-        asm_lw(reg("t", 3), addr_im_reg(-offset, reg_sp()));
+        asm_lw(reg("t", 3), addr_im_reg(imm(offset), reg_fp()));
         asm_sw(reg("t", num), addr_reg(reg("t", 3)));
     }
 
@@ -60,27 +60,43 @@ void genAsm(list_node_t *node)
             p_asm("l%d:\n", ir->target->u.no);
             break;
         case Fun:
-            p_asm("f%d:\n", ir->target->u.no);
+            if(ir->target->u.no == 0) {
+                p_asm("main:\n");
+                asm_mv(reg_fp(), reg_sp());
+                asm_sw(reg_fp(), addr_im_reg(imm(-4), reg_fp()));
+            }
+            else {
+                p_asm("f%d:\n", ir->target->u.no);
+            }
+            push_asm_block(8);
+            init_var_list(node);
             break;
         case Return:
             asm_mv(reg_sp(), reg_fp());
-            asm_lw(addr_im_reg(imm(-4), reg_sp()), reg_fp());
+            asm_lw(reg_fp(), addr_im_reg(imm(-4), reg_sp()));
+            prepare(ir->target, 0);
+            asm_mv(reg("v", 0), reg("t", 0));
             asm_return(reg_ra());
+            pop_asm_block();
             break;
         case Call:
             asm_sw(reg_fp(), addr_im_reg(imm(-4), reg_sp()));
-            asm_sw(reg_ra(), addr_im_reg(imm(-8), reg_sp()));
+            // asm_sw(reg_ra(), addr_im_reg(imm(-8), reg_sp()));
             list_node_t *tmp = node->prev;
             int i = 1;
-            while (((IR *)node->val)->kind == Arg)
+            while (((IR *)tmp->val)->kind == Arg)
             {
-                prepare(((IR *)node->val)->target, 0);
-                asm_sw(reg("t", 0), addr_im_reg(imm(-4 - i * 4), reg_sp()));
+                prepare(((IR *)tmp->val)->target, 0);
+                asm_sw(reg("t", 0), addr_im_reg(imm(-8 - i * 4), reg_sp()));
                 tmp = tmp->prev;
                 i++;
             }
+            asm_sw(reg_ra(), addr_im_reg(imm(-8), reg_fp()));
             asm_mv(reg_fp(), reg_sp());
-            asm_sub(reg_sp(), reg_sp(), 4 * (i + 1));
+            asm_sub(reg_sp(), reg_sp(), imm(4 * (i + 1)));
+            p_asm("jal f%d\n", ir->arg1->u.no);
+            save(ir->target, 0);
+            asm_lw(reg_ra(), addr_im_reg(imm(-8), reg_fp()));
             break;
         case Calculate:
             prepare(ir->arg1, 0);
@@ -90,6 +106,9 @@ void genAsm(list_node_t *node)
             save(ir->target, 2);
             break;
         case Assign:
+            prepare(ir->arg1, 1);
+            asm_mv(reg("t", 0), reg("t", 1));
+            save(ir->target, 0);
             break;
         case Goto:
             asm_j(ir->target->u.value);
@@ -125,7 +144,7 @@ void genAsm(list_node_t *node)
         case Read:
             p_asm("li $v0, 5\n");
             asm_sys();
-            asm_mv(reg("t", 0), reg("a", 0));
+            asm_mv(reg("t", 0), reg("v", 0));
             save(ir->target, 0);
             break;
         case Write:
@@ -135,4 +154,32 @@ void genAsm(list_node_t *node)
             asm_sys();
             break;
     }
+}
+
+void init_var_list(list_node_t *node)
+{
+    IR *ir = (IR*)(node->val);
+    int size_sum = 0;
+    while(node->next != NULL && ((IR*)(node->next->val))->kind != Fun)
+    {
+        if(ir->kind == Assign || ir->kind == Calculate || ir->kind == Dec
+            || ir->kind == Call || ir->kind == Read) 
+        {
+            ASM_Block *block;
+            if(find_var(ir->target->u.no, &block) != NULL)
+                continue;
+            int size = 4;
+            if(ir->kind == Dec)
+                size = ir->arg1->u.value;
+            add_var(size, ir->target->u.no);
+            size_sum += size;
+        }
+        else if(ir->kind == Param)
+        {
+            add_var(4, ir->target->u.no);
+        }
+        node = node->next;
+        ir = (IR*)(node->val);
+    }
+    asm_sub(reg_sp(), reg_sp(), imm(size_sum));
 }

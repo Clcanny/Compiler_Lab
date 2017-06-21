@@ -1,0 +1,18 @@
+int gun(int d)
+{
+    return d;
+}
+int fun(int c)
+{
+    return gun(c);
+}
+
+
+int main()
+{
+    int a;
+    a = read();
+    write(fun(a));
+    return a;
+}
+
