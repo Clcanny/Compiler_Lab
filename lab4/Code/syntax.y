@@ -56,8 +56,8 @@ Program
         globalFuncSymbolTable = newFuncSymbolTable();
         globalStructStack = newStructStack();
         traversalTreePerformAction($$);
-        traverse_list(IR_list, print_IR);
-        printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+        // traverse_list(IR_list, print_IR);
+        // printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
         // peep_hole();
         /* generate_CFG(); */
         // findUndefinedFunction();

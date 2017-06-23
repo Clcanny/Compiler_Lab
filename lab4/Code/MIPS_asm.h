@@ -55,19 +55,19 @@
 #define asm_mv(Rdest, Rsrc) p_asm("move "),Rdest,p_asm(", "),Rsrc,p_asm("\n")
 
 #define asm_equal(Rs, Rt, no) \
-    p_asm("beq "),Rs,p_asm(", "),Rt,p_asm(", "),p_asm("label%d\n", no)
+    p_asm("beq "),Rs,p_asm(", "),Rt,p_asm(", "),p_asm("l%d\n", no)
 #define asm_not_equal(Rs, Rt, no) \
-    p_asm("bne "),Rs,p_asm(", "),Rt,p_asm(", "),p_asm("label%d\n", no)
+    p_asm("bne "),Rs,p_asm(", "),Rt,p_asm(", "),p_asm("l%d\n", no)
 #define asm_less(Rs, Rt, no) \
-    p_asm("blt "),Rs,p_asm(", "),Rt,p_asm(", "),p_asm("label%d\n", no)
+    p_asm("blt "),Rs,p_asm(", "),Rt,p_asm(", "),p_asm("l%d\n", no)
 #define asm_less_equal(Rs, Rt, no) \
-    p_asm("ble "),Rs,p_asm(", "),Rt,p_asm(", "),p_asm("label%d\n", no)
+    p_asm("ble "),Rs,p_asm(", "),Rt,p_asm(", "),p_asm("l%d\n", no)
 #define asm_more(Rs, Rt, no) \
-    p_asm("bgt "),Rs,p_asm(", "),Rt,p_asm(", "),p_asm("label%d\n", no)
+    p_asm("bgt "),Rs,p_asm(", "),Rt,p_asm(", "),p_asm("l%d\n", no)
 #define asm_more_equal(Rs, Rt, no) \
-    p_asm("bge "),Rs,p_asm(", "),Rt,p_asm(", "),p_asm("label%d\n", no)
+    p_asm("bge "),Rs,p_asm(", "),Rt,p_asm(", "),p_asm("l%d\n", no)
 #define asm_j(no) \
-    p_asm("j label%d\n", no)
+    p_asm("j l%d\n", no)
 #define asm_return(rt) \
     p_asm("jr "),rt,p_asm("\n")
 #define asm_sys() \
